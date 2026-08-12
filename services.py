@@ -18,12 +18,9 @@ def checkout_empty_cart(user_id: int) -> OrderSummary:
     """
     Checkout flow that builds an empty cart and tries to find the cheapest item.
 
-    Raises EmptyCartError if the cart has no items, which the route layer
-    should translate into an HTTP 400 response.
+    Triggers Bug 1 (IndexError) via find_cheapest_item on an empty cart.
     """
     cart = Cart(user_id=user_id, items=[])
-    if not cart.items:
-        raise EmptyCartError("Cannot checkout with an empty cart")
     cheapest = find_cheapest_item(cart.items)
     total = sum(item.price * item.quantity for item in cart.items)
     return OrderSummary(
