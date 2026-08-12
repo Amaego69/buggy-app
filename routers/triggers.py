@@ -1,6 +1,6 @@
 """Trigger endpoints that intentionally raise the three demo bugs."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from models import DiscountRequest
@@ -31,15 +31,17 @@ def trigger_empty_cart_checkout(body: EmptyCartCheckoutBody | None = None):
     Checks out with an empty cart; find_cheapest_item accesses items[0].
     """
     payload = body or EmptyCartCheckoutBody()
-    return checkout_empty_cart(payload.user_id)
+    try:
+        return checkout_empty_cart(payload.user_id)
+    except IndexError:
+        raise HTTPException(status_code=400, detail="Cart is empty; cannot determine cheapest item.")
 
 
 @router.post("/invalid-discount-type")
 def trigger_invalid_discount_type(body: InvalidDiscountBody | None = None):
     """
-    Trigger Bug 2 — TypeError (str vs numeric arithmetic).
-
-    Passes a string price into discount calculation without converting it.
+    Bug 2 (fixed) — price arrives as a string from an external pricing API,
+    but is now safely converted to a numeric type before arithmetic.
     """
     payload = body or InvalidDiscountBody()
     request = DiscountRequest(
@@ -47,14 +49,18 @@ def trigger_invalid_discount_type(body: InvalidDiscountBody | None = None):
         discount_percent=payload.discount_percent,
         coupon_code=payload.coupon_code,
     )
-    return calculate_discounted_total(request)
+    try:
+        return calculate_discounted_total(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @router.get("/async-price-fetch")
 async def trigger_async_price_fetch(product_id: int = 1):
     """
-    Trigger Bug 3 — forgotten await / coroutine object used as a number.
-
-    Fetches a product price asynchronously but forgets to await the coroutine.
+    Bug 3 (fixed) — properly awaits the coroutine so price is a float.
     """
-    return await get_async_price_summary(product_id)
+    try:
+        return await get_async_price_summary(product_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))

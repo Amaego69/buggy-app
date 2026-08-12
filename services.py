@@ -35,8 +35,8 @@ def calculate_discounted_total(request: DiscountRequest) -> dict:
     """
     Calculate a discounted price.
 
-    Triggers Bug 2 (TypeError): external API-style price arrives as a string,
-    and apply_percent_discount tries arithmetic on it without conversion.
+    The external pricing API may return price as a string; apply_percent_discount
+    now safely converts it to a numeric type before performing arithmetic.
     """
     # Simulate an external pricing API that returns prices as strings
     raw_price = request.price if isinstance(request.price, str) else str(request.price)
@@ -62,12 +62,10 @@ async def get_async_price_summary(product_id: int) -> dict:
     """
     Build a price summary using an async price fetch.
 
-    BUG 3 — forgotten await: calls fetch_product_price without await, so
-    `price` is a coroutine object instead of a float. Later formatting /
-    arithmetic blows up (or returns a nonsensical coroutine in the response).
+    Fixed: properly await fetch_product_price so `price` is a float rather
+    than a coroutine object.
     """
-    # Missing await — intentionally buggy
-    price = fetch_product_price(product_id)
+    price = await fetch_product_price(product_id)
     tax = price * 0.08
     return {
         "product_id": product_id,
