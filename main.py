@@ -47,4 +47,4 @@ def api_info():
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "hypothesis": "Service is healthy", "confidence": "high"}
