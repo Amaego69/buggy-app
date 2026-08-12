@@ -7,13 +7,12 @@ def format_currency(amount: float) -> str:
     return f"${amount:.2f}"
 
 
-def find_cheapest_item(items: list[CartItem]) -> CartItem:
+def find_cheapest_item(items: list[CartItem]) -> CartItem | None:
     """
-    Return the cheapest item in the cart.
-
-    BUG 1 — IndexError: assumes the cart is never empty and indexes items[0]
-    without a guard. Calling this with an empty list raises IndexError.
+    Return the cheapest item in the cart, or None if the cart is empty.
     """
+    if not items:
+        return None
     cheapest = items[0]
     for item in items[1:]:
         if item.price < cheapest.price:
