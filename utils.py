@@ -25,8 +25,9 @@ def apply_percent_discount(price, discount_percent: int) -> float:
     """
     Apply a percentage discount to a price.
 
-    BUG 2 — TypeError: when `price` is a string (as returned by an external
-    pricing API), subtracting a float from a str fails at runtime.
+    `price` may arrive as a string (as returned by an external pricing API),
+    so it is converted to a float before performing arithmetic.
     """
+    price = float(price)
     discount_amount = price * (discount_percent / 100)
     return price - discount_amount
